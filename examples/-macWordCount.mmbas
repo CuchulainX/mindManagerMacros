@@ -1,0 +1,178 @@
+'-----------------------------------------------------------------------------
+'macWordCount
+'Description:	Macro used to count words in Notes entries. The macro should
+'				be saved and added to the Notes context menu so that it can be
+'				accessed by right clicking from within the notes window.
+'Author:  		Created by Trent Jordan
+'Date:			22 May 2005
+'-----------------------------------------------------------------------------
+Option Explicit
+Option Base 1
+
+'Variable used to define the path of the document
+Dim mstrPath As String
+
+'Constant used to define the name of this macro.  Used in error tracking
+Const mstrcMac As String = "macWordCount"
+
+
+Sub Main
+	Dim docActive As Document
+	Dim topActive As Topic
+	Dim notActive As Notes
+
+	Dim strNotes As String
+	Dim iint As Integer
+	Dim lngWordCount As Long
+	Dim strChr As String
+	Dim strLastChr As String
+
+	Const strSpace As String = " "
+
+	Dim topRef As Topic
+	Dim topCentral As Topic
+	Dim etopBOI As Topic
+	Dim etopRef As Topic
+	Dim strRef As String
+	Dim intOpt As Integer
+	Dim lngCursor As Long
+
+  	Const strcProc As String = "Main"
+
+  	On Error GoTo Main_Error
+
+	'Define the active document
+	Set docActive = ActiveDocument
+	mstrPath=docActive.Path
+
+	'Set variable topActive as the selected topic
+	Set topActive = ActiveDocument.Selection.PrimaryTopic
+
+	'Set variable notActive as the notes to perform the word count on
+	Set notActive = topActive.Notes
+
+	strNotes = notActive.Text
+
+	lngWordCount = 0
+	strLastChr = strSpace
+
+	For iint = 1 To Len(strNotes)
+		strChr = Mid(strNotes,iint,1)
+		If strLastChr=strSpace And strChr<>strSpace Then
+			lngWordCount = lngWordCount+1
+		End If
+		strLastChr = strChr
+	Next iint
+
+	MsgBox "Word Count: " & lngWordCount, vbInformation+vbOkOnly
+
+Main_Exit:
+  Exit Sub
+
+Main_Error:
+  GlobalErrorHandler Err.Number, Err.Source, Err.Description, mstrcMac, strcProc, "", True
+  GoTo Main_Exit
+
+End Sub
+
+
+Public Function GlobalErrorHandler(ByVal lngErrNumber As Long _
+                                  , ByVal strErrSource As String _
+                                  , ByVal strErrDescription As String _
+                                  , ByVal strModuleName As String _
+                                  , ByVal strProcedureName As String _
+                                  , ByVal strOtherText As String _
+                                  , Optional ByVal blnDisplayMsg As Boolean) As Boolean
+'Purpose:   To log errors in a text file
+'Author:    Adapted for use by Trent Jordan from www.accesswizards.com
+'Returns:   Returns 'True' (boolean) if error was successfully logged
+
+  Const strcLogFile As String = mstrcMac & "_ErrorLog.txt"
+  Const strTitle As String = mstrcMac
+  Const strAuthor As String = "Trent Jordan"
+  Const strAuthorEmail As String = "trentandmary@optusnet.com.au"
+  Dim strDir As String
+  Dim strFullName As String
+
+  On Error GoTo GlobalErrorHandler_err
+
+  GlobalErrorHandler = False
+
+  If IsNull(strErrDescription) Then
+    strErrDescription = "No Description Returned"
+  Else
+    strErrDescription = RemoveErrorMsgCharacters(strErrDescription)
+  End If
+
+  If IsMissing(strOtherText) Then
+    strOtherText = ""
+  End If
+
+  If IsMissing(blnDisplayMsg) Then
+    blnDisplayMsg = True
+  End If
+
+    strDir = mstrPath
+
+    strFullName = strDir & "\" & strcLogFile
+    Open strFullName For Append As #1
+
+    Write #1, "Error logged at: " & Now()
+    On Error Resume Next
+    'Ignores any errors that may occur when retrieving local and network user names.
+    On Error GoTo GlobalErrorHandler_err
+    Write #1, "Err Number: " & lngErrNumber
+    Write #1, "Err Source: " & strErrSource
+    Write #1, "Err Description: " & strErrDescription
+    Write #1, "Module: " & strModuleName
+    Write #1, "Procedure: " & strProcedureName
+    Write #1, "Notes: " & strOtherText
+    Write #1,
+    Close #1
+
+If blnDisplayMsg = True Then
+  MsgBox "The following error occurred in " & strTitle & " :" & vbCrLf & vbCrLf & _
+    "Error Number: " & lngErrNumber & vbCrLf & _
+    "Error Description: " & strErrDescription, vbCritical + vbOkOnly
+End If
+
+GlobalErrorHandler = True
+
+GlobalErrorHandler_exit:
+  Exit Function
+
+GlobalErrorHandler_err:
+  MsgBox "An error occurred in the " & strTitle & " Global Error Handler.  " _
+        & "Please note the details below and contact email " & strAuthor & " at '" & strAuthorEmail & " '" _
+        & vbNewLine & vbNewLine _
+        & "Err Number: " & lngErrNumber & vbNewLine _
+        & "Err Source: " & strErrSource & vbNewLine _
+        & "Err Description: " & strErrDescription & vbNewLine _
+        & "Module: " & strModuleName & vbNewLine _
+        & "Procedure: " & strProcedureName & vbNewLine _
+        & "Notes: " & strOtherText, vbExclamation + vbOkOnly
+
+  GoTo GlobalErrorHandler_exit
+
+End Function
+
+Public Function RemoveErrorMsgCharacters(strErrorMsg As String) As String
+'Purpose:   To remove "@" characters from error message descriptions
+
+  Dim intLen As Integer
+  Dim iintLoop As Integer
+  Dim strReturn As String
+  Dim strChar As String
+
+  intLen = Len(strErrorMsg)
+  strReturn = ""
+  For iintLoop = 1 To intLen
+    strChar = Mid(strErrorMsg, iintLoop, 1)
+    If strChar <> "@" Then
+      strReturn = strReturn & strChar
+    End If
+  Next iintLoop
+
+  RemoveErrorMsgCharacters = strReturn
+
+End Function

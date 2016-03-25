@@ -1,0 +1,99 @@
+
+' force dim statements for variables
+Option Explicit
+
+' define some constants for message display
+Const msgTitle As String = "Dump Topic Markers"
+Const msgNeedMapDoc As String = "Open a map to show the map markers"
+
+' macros starts here
+Sub Main
+
+	' get a document to work on
+	Dim doc As Document
+	Set doc = ActiveDocument
+
+	If (doc Is Nothing) Then
+		' handle the "no doc loaded" case
+		MsgBox(msgNeedMapDoc,vbOkOnly,msgTitle)
+		GoTo ExitNow
+	End If
+
+	Debug.Clear
+
+	' get a collection of all the topics in the active map
+	Dim r As Range
+	Set r = doc.Range(mmRangeAllTopics)
+
+	'iterate over the topic collection
+	Dim t  As Topic
+	For Each t In r
+		' for each topic, get it's user icon collection, which are the custom icons
+		Dim topicIcons As Icons
+		Set topicIcons = t.AllIcons
+
+		' show some topic info
+		Debug.Print("Topic "+t.Text+" has "+ Str$(topicIcons.Count)+"  icons")
+		Dim i As Icon
+		For Each i In topicIcons
+			' for each custom user icon associated with the current topic, show an icon display name
+			Dim iconName As String
+			iconName = GetIconDisplayName(doc,i)
+			Debug.Print(vbTab + iconName)
+		Next
+
+	Next
+
+ExitNow:
+
+End Sub
+'
+' return the display name of a custom or stock icon in a document
+'
+Public Function GetIconDisplayName(doc As Document, ic As Icon) As String
+
+	Dim allGroups As MapMarkerGroups
+	Dim aGroup As MapMarkerGroup
+	Dim aMapMarker As MapMarker
+	Dim result As String
+
+	result = ic.Name	' set the default return
+
+	If (ic.Type = mmIconTypeCustom) Then
+		'  spin through map markers to find a display name using icon signatures
+		Set allGroups = doc.MapMarkerGroups
+		' Debug.Clear
+		For Each aGroup In allGroups
+			' Debug.Print "======"
+			' Debug.Print "Group " + aGroup.Name + " contains:"
+			For Each aMapMarker In aGroup
+				' Debug.Print aMapMarker.Label + " == " + aMapMarker.Icon.Name
+				If (aMapMarker.Icon.Type = mmIconTypeCustom) Then ' only mmIconTypeCustom types have CustomIconSignature properties
+			    	If StrComp(aMapMarker.Icon.CustomIconSignature, ic.CustomIconSignature) = 0 Then
+			    		result = aMapMarker.Label	' found a display name so exit
+			    		GoTo ExitNow
+			    	End If
+			    End If
+			Next
+		Next
+	Else
+		' otherwise spin through map markers using icon names to find a display name
+		Set allGroups = ActiveDocument.MapMarkerGroups
+		' Debug.Clear
+		For Each aGroup In allGroups
+			' Debug.Print "======"
+			' Debug.Print "Group " + aGroup.Name + " contains:"
+			For Each aMapMarker In aGroup
+				' Debug.Print aMapMarker.Label + " == " + aMapMarker.Icon.Name
+			    If StrComp(aMapMarker.Icon.Name, ic.Name) = 0 Then
+			    	result = aMapMarker.Label	' found a display name so exit
+			    	GoTo ExitNow
+			    End If
+			Next
+		Next
+	End If
+
+
+ExitNow:
+	GetIconDisplayName = result
+End Function

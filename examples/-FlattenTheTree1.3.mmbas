@@ -1,0 +1,109 @@
+' ++++++++++++++++++++++++++++++++++++++++++
+' File Name: flattenthetree.mmbas
+' Author: Steve Collier-Smith
+' Created: 25 April 2005
+' Description: Takes tree structure and creates single string for each path
+' through the tree, then creates a new topic with all paths as note text
+'
+'++++++++++++++++++++++++++++++++++++++++++++
+' Revision History
+' Rev	Date		Summary of changes
+' 1.3	28/04/2005	Added dialog to choose to go back to selected topic or Central Topic
+' 1.2	26/04/2005	Array elements only added for each 'end' topic, not every topic
+'					Places extracted text on the clipboard
+' 1.1	25/04/2005	Extracts items below Selection if a topic is selected,
+'					otherwise extracts from entire map
+' 1.0	25/04/2005	First Revision
+'++++++++++++++++++++++++++++++++++++++++++++
+
+Dim WithEvents iterator As TopicFinder
+Dim strFullText() As String 'Array to store text strings
+Dim i As Integer 'Keeps track of iterations of the topic finder
+Dim c As Integer 'Counter to cycle through strFullText and append row to notes
+Dim l As Integer 'Level of first subtopic from selection
+Dim x As Integer 'Decision to include complete tree or not
+Dim tParent As Topic
+Dim sTopic As Topic
+Dim strText As String
+Sub Main
+
+
+    Dim t As Topic
+	i = 1
+
+    If ActiveDocument.Selection.Count=0 Then
+    	Set t = ActiveDocument.CentralTopic
+		l = 1
+    Else
+		Begin Dialog UserDialog 240,77 ' %GRID:10,7,1,1
+			CheckBox 30,14,200,14,"Include path to central topic?",.CheckBox1
+			OKButton 70,49,110,21
+		End Dialog
+		Dim dlg As UserDialog
+		Dialog dlg
+		x = dlg.checkbox1
+
+		If x = 0 Then
+    		Set t = ActiveDocument.Selection(1)
+    		l = t.Level + 1
+		Else
+			Set t = ActiveDocument.Selection(1)
+    		l = 1
+		End If
+	End If
+
+    Set iterator = t.NewTopicFinder
+
+	'Set TopicFinder parameters...
+    iterator.IncludeHiddenTopics = True
+    iterator.Start
+
+	'Print the array to the clipboard...
+	strText = ""
+	For c = 1 To UBound(strFullText)
+		strText = strText & strFullText(c) & vbCrLf
+	Next c
+	Clipboard strText
+
+
+End Sub
+Private Sub iterator_TopicFound( t As Topic )
+
+	If t.Level = 0 Then
+	'Topic is central topic - do nothing
+	'Check required to prevent an error when trying to find
+	'the central topic's parent (which does not exist!)
+	Else
+
+	'Only start from the End of a branch, i.e. topic has no subtopics...
+	If t.AllSubTopics.Count=0 Then
+
+		Set tParent = t.ParentTopic
+		strText = t.Text
+
+			'Go back up the tree, stopping at each node to collect some text...
+			For c = t.Level To l Step -1' '1 Step -1
+
+				'Concatenate some strings...
+				strText = tParent.Text & " > " & strText
+
+				'get the next parent up...
+				Set tParent = tParent.ParentTopic
+
+			'Go back up the tree one more node...
+			Next c
+
+		'We have reached the first level main topic, so save
+		'the text to a new row in our storage array...
+		ReDim Preserve strFullText (i)
+		strFullText(i) = strText
+
+		'Track the next iteration to add a new row to the array strFullText
+		i = i + 1
+	Else
+	'Do nothing
+	End If
+
+End If
+
+End Sub

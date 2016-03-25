@@ -1,0 +1,9 @@
+C:\Users\Olympic\Documents\Visual Studio 2008\Projects\ExamplMindManagerAddin\ExamplMindManagerAddin\bin\Project1.dll
+C:\Users\Olympic\Documents\Visual Studio 2008\Projects\ExamplMindManagerAddin\ExamplMindManagerAddin\bin\Project1.pdb
+C:\Users\Olympic\Documents\Visual Studio 2008\Projects\ExamplMindManagerAddin\ExamplMindManagerAddin\bin\Project1.xml
+C:\Users\Olympic\Documents\Visual Studio 2008\Projects\ExamplMindManagerAddin\ExamplMindManagerAddin\bin\Project1.tlb
+C:\Users\Olympic\Documents\Visual Studio 2008\Projects\ExamplMindManagerAddin\ExamplMindManagerAddin\obj\Debug\ResolveAssemblyReference.cache
+C:\Users\Olympic\Documents\Visual Studio 2008\Projects\ExamplMindManagerAddin\ExamplMindManagerAddin\obj\Debug\ExamplMindManagerAddin.vbproj.ResolveComReference.cache
+C:\Users\Olympic\Documents\Visual Studio 2008\Projects\ExamplMindManagerAddin\ExamplMindManagerAddin\obj\Debug\Project1.dll
+C:\Users\Olympic\Documents\Visual Studio 2008\Projects\ExamplMindManagerAddin\ExamplMindManagerAddin\obj\Debug\Project1.xml
+C:\Users\Olympic\Documents\Visual Studio 2008\Projects\ExamplMindManagerAddin\ExamplMindManagerAddin\obj\Debug\Project1.pdb

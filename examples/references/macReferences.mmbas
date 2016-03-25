@@ -1,0 +1,275 @@
+'-----------------------------------------------------------------------------
+'macReferences
+'Description:	Macro used to insert in text references from a reference list
+'				into topic Notes.  The macro should be saved and added to the
+'				Notes context menu.  Right clicking from the desired insertion
+'				point within the notes will provide the user with a list of
+'				available references for insertion.  For this macro to work
+'				it requires a defined basic ordering idea or main topic
+'				called "References" under which the subtopics are the
+'				individual references.  The format should be of the type
+'				"Smith, 2000".  Currently the macro relies on a standard
+'				reference of author date.  In the future it may be possible
+'				to modify the code to cope with a wider array of referencing
+'				situations.
+'Author:  		Created by Trent Jordan
+'Date:			21 May 2005
+'-----------------------------------------------------------------------------
+Option Explicit
+Option Base 1
+
+'Variable used to define the path of the document
+Dim mstrPath As String
+
+'Constant used to define the name of this macro.  Used in error tracking
+Const mstrcMac As String = "macReferences"
+
+
+Sub Main
+	Dim docActive As Document
+	Dim topActive As Topic
+	Dim topRef As Topic
+	Dim topCentral As Topic
+	Dim etopBOI As Topic
+	Dim etopRef As Topic
+	Dim astrReferences$()
+	Dim iint As Integer
+	Dim strRef As String
+	Dim intOpt As Integer
+	Dim lngCursor As Long
+
+  	Const strcProc As String = "Main"
+
+  	On Error GoTo Main_Error
+
+	'!!Important: This constant is used to define the text/name of the main
+	'topic which contains all the references as subtopics.  There must be a
+	'main topic titled according to this string for the macro to work.
+	Const strcReferenceTopic As String = "References"
+
+	'Define the active document
+	Set docActive = ActiveDocument
+	mstrPath=docActive.Path
+
+	'Set variable topActive as the selected topic
+	'?? Is this the best way to define the selected topic?
+	Set topActive = ActiveDocument.Selection.PrimaryTopic
+
+	'Set variable topCentral as the central topic in the active document
+	'from where we search for the references.
+	Set topCentral =docActive.CentralTopic
+
+	'This bit here doesn't work... it returns a value of 1.  I have assigned
+	'the macro to the notes context window, so right clicking and why??
+	lngCursor = topActive.Notes.CursorPosition
+
+	iint =0
+	'Loop through the main topics in order to find the References main topic
+	For Each etopBOI In topCentral.SubTopics
+		If etopBOI.Text = strcReferenceTopic Then
+			'Now loop through all the individual references and log them in
+			'the array astrReferences
+			For Each etopRef In etopBOI.SubTopics
+				iint = iint+1
+				ReDim Preserve astrReferences$(iint)
+				astrReferences$(iint)=etopRef.Text
+			Next etopRef
+		End If
+	Next etopBOI
+
+	'If iint =0 then it means that no references were found and logged to the
+	'astrReferences array.  So the user is shown a message before the macro
+	'is exited.
+	If iint=0 Then
+		MsgBox "No references could be found in the map",vbExclamation+vbOkOnly
+		Exit Sub
+	End If
+
+	'Define the userdialog box, which presents the user with the list of
+	'references from astrReferences.
+	Begin Dialog UserDialog 390,196 ' %GRID:10,7,1,1
+		ListBox 20,14,180,175,astrReferences$(),.strListChoice
+		OKButton 260,140,90,21
+		GroupBox 220,56,160,70,"Reference style",.GroupBox1
+		OptionGroup .Options
+			OptionButton 240,98,110,14,"(Smith, 2000)"	'Value 0
+			OptionButton 240,77,110,14,"Smith (2000)"	'Value 1
+		Text 220,14,160,35,"Insert a reference into the notes.",.Text1
+		CancelButton 260,168,90,21
+	End Dialog
+
+	Dim dlg As UserDialog
+
+	'Define defaults for the dialog box
+	dlg.Options = 1
+	dlg.strListChoice = 0
+
+	'Display the dialog box, but cancel/end the macro if the cancel button
+	'is hit.
+    If Dialog(dlg) <> -1 Then' show dialog (wait for ok)
+		Exit Sub
+	End If
+
+	'Set strRef to the selected option (note the option base for the dialog
+	'box is 0 so we have to add 1 to dlg.strListChoice.
+	strRef = CStr(astrReferences$(CInt(dlg.strListChoice+1)))
+	intOpt = dlg.Options
+
+	'Call the GetReferenceStyle function and modify the refernce accordingly
+	strRef = GetReferenceStyle(intOpt, strRef)
+
+	'This is the other bit that doesn't work.  If the macro had picked up the
+	'correct cursor position, we could ensure that that position was still
+	'selected at this point.
+	topActive.Notes.CursorPosition = lngCursor
+
+	topActive.Notes.Insert strRef
+
+Main_Exit:
+  Exit Sub
+
+Main_Error:
+  GlobalErrorHandler Err.Number, Err.Source, Err.Description, mstrcMac, strcProc, "", True
+  GoTo Main_Exit
+
+End Sub
+
+Function GetReferenceStyle(ByVal rintOpt As Integer, ByVal rstrRef As String) As String
+'Purpose:	Modify a string reference that is in the form "Smith, 2000" into
+'			appropriate strings that can be inserted into text.
+'Issues:	Currently crude.  Relies on the fact that the reference is entered
+'			with the last four characters in the string being the date.
+'			Obviously this will not always be the case.  Hence this function
+'			can be improved to cater for other situations that currently won't
+'			work (e.g. "Smith n.d.")
+
+	Dim strRefAuth As String
+	Dim strRefDate As String
+
+  	Const strcProc As String = "GetReferenceStyle"
+
+  	On Error GoTo GetReferenceStyle_Error
+
+	'Extract the author(s) from the reference
+	strRefAuth = Left(rstrRef,(Len(rstrRef)-6))
+
+	'Extract the date from the reference
+	strRefDate = Right(rstrRef$,4)
+
+	Select Case rintOpt
+	Case 1	'Style: ... Smith (2000) ...
+		GetReferenceStyle = strRefAuth & " (" & strRefDate & ")"
+	Case 0	'Style: ... (Smith, 2000) ...
+		GetReferenceStyle = "(" & rstrRef & ")"
+	End Select
+
+GetReferenceStyle_Exit:
+  Exit Function
+
+GetReferenceStyle_Error:
+  GlobalErrorHandler Err.Number, Err.Source, Err.Description, mstrcMac, strcProc, "", True
+  GoTo GetReferenceStyle_Exit
+
+End Function
+
+
+Public Function GlobalErrorHandler(ByVal lngErrNumber As Long _
+                                  , ByVal strErrSource As String _
+                                  , ByVal strErrDescription As String _
+                                  , ByVal strModuleName As String _
+                                  , ByVal strProcedureName As String _
+                                  , ByVal strOtherText As String _
+                                  , Optional ByVal blnDisplayMsg As Boolean) As Boolean
+'Purpose:   To log errors in a text file
+'Author:    Adapted for use by Trent Jordan from www.accesswizards.com
+'Returns:   Returns 'True' (boolean) if error was successfully logged
+
+  Const strcLogFile As String = "MindManger_Referencing.txt"
+  Const strTitle As String = "Referencing"
+  Const strAuthor As String = "Trent Jordan"
+  Const strAuthorEmail As String = "trentandmary@optusnet.com.au"
+  Dim strDir As String
+  Dim strFullName As String
+
+  On Error GoTo GlobalErrorHandler_err
+
+  GlobalErrorHandler = False
+
+  If IsNull(strErrDescription) Then
+    strErrDescription = "No Description Returned"
+  Else
+    strErrDescription = RemoveErrorMsgCharacters(strErrDescription)
+  End If
+
+  If IsMissing(strOtherText) Then
+    strOtherText = ""
+  End If
+
+  If IsMissing(blnDisplayMsg) Then
+    blnDisplayMsg = True
+  End If
+
+    strDir = mstrPath
+
+    strFullName = strDir & "\" & strcLogFile
+    Open strFullName For Append As #1
+
+    Write #1, "Error logged at: " & Now()
+    On Error Resume Next
+    'Ignores any errors that may occur when retrieving local and network user names.
+    On Error GoTo GlobalErrorHandler_err
+    Write #1, "Err Number: " & lngErrNumber
+    Write #1, "Err Source: " & strErrSource
+    Write #1, "Err Description: " & strErrDescription
+    Write #1, "Module: " & strModuleName
+    Write #1, "Procedure: " & strProcedureName
+    Write #1, "Notes: " & strOtherText
+    Write #1,
+    Close #1
+
+If blnDisplayMsg = True Then
+  MsgBox "The following error occurred in " & strTitle & " :" & vbCrLf & vbCrLf & _
+    "Error Number: " & lngErrNumber & vbCrLf & _
+    "Error Description: " & strErrDescription, vbCritical + vbOkOnly
+End If
+
+GlobalErrorHandler = True
+
+GlobalErrorHandler_exit:
+  Exit Function
+
+GlobalErrorHandler_err:
+  MsgBox "An error occurred in the " & strTitle & " Global Error Handler.  " _
+        & "Please note the details below and contact email " & strAuthor & " at '" & strAuthorEmail & " '" _
+        & vbNewLine & vbNewLine _
+        & "Err Number: " & lngErrNumber & vbNewLine _
+        & "Err Source: " & strErrSource & vbNewLine _
+        & "Err Description: " & strErrDescription & vbNewLine _
+        & "Module: " & strModuleName & vbNewLine _
+        & "Procedure: " & strProcedureName & vbNewLine _
+        & "Notes: " & strOtherText, vbExclamation + vbOkOnly
+
+  GoTo GlobalErrorHandler_exit
+
+End Function
+
+Public Function RemoveErrorMsgCharacters(strErrorMsg As String) As String
+'Purpose:   To remove "@" characters from error message descriptions
+
+  Dim intLen As Integer
+  Dim iintLoop As Integer
+  Dim strReturn As String
+  Dim strChar As String
+
+  intLen = Len(strErrorMsg)
+  strReturn = ""
+  For iintLoop = 1 To intLen
+    strChar = Mid(strErrorMsg, iintLoop, 1)
+    If strChar <> "@" Then
+      strReturn = strReturn & strChar
+    End If
+  Next iintLoop
+
+  RemoveErrorMsgCharacters = strReturn
+
+End Function

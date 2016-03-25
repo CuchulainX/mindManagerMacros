@@ -1,0 +1,144 @@
+'#Reference {A5082CA1-0580-4287-B3D5-91B0FDB3C0FE}#1.0#0#C:\Program Files\Mindjet\MindManager 5\Mm5WebExport.dll#Mm5WebExport 1.0 Type Library
+'#Uses "GlobalParameterNames.mmbas"
+'#Uses "ParameterNames.mmbas"
+'#Uses "GlobalUtilities.mmbas"
+'#Uses "DoBuilder.cls"
+
+Option Explicit
+
+Sub Main
+
+    Dim addin As Mm5WebExportAddIn
+    Dim webex As WebExport
+    Dim oneDynamicOutlineBuilder As DynamicOutlineBuilder
+
+    Set addin = WebExportHelper.WebExportAddIn
+    Set webex = addin.ActiveWebExport
+    Set oneDynamicOutlineBuilder = New DynamicOutlineBuilder
+
+    Dim bodyString As String
+    Dim topicString As String
+    Dim OutlineItems As String
+
+    On Error GoTo ReportError
+
+    webex.Trace("Entering EndExport " + CStr(webex.GetParameter(WeErrorNumber)), 2)
+
+    ' Generate CONTENTS page
+    bodyString = webex.ReadFile("ToolsCnt.htm")
+    topicString = bodyString
+
+    ' Process all commands and parameters
+    ProcessString webex, topicString
+    bodyString = topicString
+
+    ' Write out the result
+    webex.WriteFile ("contents.htm", bodyString)
+
+    ' Generate LEGEND page if required
+    If webex.GetParameter("Strings.Show.IconLegend") Then
+        bodyString = webex.ReadFile("ToolsLg.htm")
+        topicString = bodyString
+        ' Process all commands and parameters
+        ProcessString webex, topicString
+        bodyString = topicString
+        ' Write out the result
+        webex.WriteFile ("legend.htm", bodyString)
+    End If
+
+    ' Generate Overview Map page
+    If webex.GetParameter("Strings.Show.OverviewMap") Then
+        bodyString = webex.ReadFile("ToolsMap.htm")
+        topicString = bodyString
+
+        ' Process all commands and parameters
+        ProcessString webex, topicString
+        bodyString = topicString
+
+        ' Write out the result
+        webex.WriteFile ("map.htm", bodyString)
+
+        bodyString = webex.ReadFile("ToolsMapCont.htm")
+        topicString = bodyString
+
+        ' Process all commands and parameters
+        ProcessString webex, topicString
+        bodyString = topicString
+
+        ' Write out the result
+        webex.WriteFile ("mapContent.htm", bodyString)
+
+        bodyString = webex.ReadFile("ToolsMapHd.htm")
+        topicString = bodyString
+
+        ' Process all commands and parameters
+        ProcessString webex, topicString
+        bodyString = topicString
+
+        ' Write out the result
+        webex.WriteFile ("mapHeader.htm", bodyString)
+
+        bodyString = webex.ReadFile("ToolsMapFooter.htm")
+        topicString = bodyString
+
+        ' Process all commands and parameters
+        ProcessString webex, topicString
+        bodyString = topicString
+
+        ' Write out the result
+        webex.WriteFile ("mapFooter.htm", bodyString)
+    End If
+
+    ' Determine whether partial map images should be shown or hidden in the export
+    'If webex.GetParameter("Strings.Show.PartialMaps") = True Then
+    If webex.GetParameter("Strings.Show.SubLinks") = "partmaps" Or webex.GetParameter("Strings.Show.SubLinks") = "partmapssingle" Then
+        webex.SetParameter("CustomParameter.ShowPartialMapsImage","visible")
+	Else
+        webex.SetParameter("CustomParameter.ShowPartialMapsImage","none")
+	End If
+
+    ' If there's no pending error
+    If webex.IsSuccessful Then
+
+       ' Copy our Resources folder
+       webex.CopyDirectory(webex.GetParameter(TdFolderResources))
+       
+       ' Process any parameters in our shared CSS files
+       ProcessResourceFile webex, "styles\shared.css"
+
+       ' Process any parameters in tree_tpl.js (so it gets the proper "Resources" folder name)
+       ProcessResourceFile webex, "tree\tree_tpl.js"
+
+       ' Process any parameters in boxController.js (so it gets the proper "Resources" folder name)
+       ProcessResourceFile webex, "code\boxController.js"
+
+       ' Copy our linked documents to the Linked Documents folder
+       webex.CopyLinkedDocuments()
+
+       ' Generate Dynamic Outline Javascript items file
+       oneDynamicOutlineBuilder.BuildDynamicOutline (webex.ActiveTopic.Document.CentralTopic), webex.GetParameter (TdNavigationDepth)
+       OutlineItems = webex.GetParameter ("CustomParameter.DynamicOutlineString")
+
+	   ' Trim out the characters that end the dynamic outline
+
+	   OutlineItems = Left( OutlineItems, Len( OutlineItems ) - 6 )
+
+	   ' Add in our supplementary dynamic outline
+
+	   OutlineItems = OutlineItems + webex.ReadFile( webex.AbsoluteExportDirectory + "resource_mapping.js" )
+
+	   ' Save it as normal...
+
+       webex.WriteFile(webex.FullExportFilename(webex.GetParameter(TdFolderResources) + "\tree\tree_items.js"), OutlineItems)
+
+    End If
+
+    webex.Trace("Exiting EndExport " + CStr(webex.GetParameter(WeErrorNumber)), 2)
+
+    Exit Sub
+   
+ReportError:
+    ProcessError(webex)
+    Exit Sub
+   
+End Sub

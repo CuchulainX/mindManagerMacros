@@ -1,0 +1,445 @@
+'#Reference {A5082CA1-0580-4287-B3D5-91B0FDB3C0FE}#1.0#0#C:\Program Files\Mindjet\MindManager 5\Mm5WebExport.dll#Mm5webexport 1.0 Type Library
+'#Uses "TOCHandler.cls"
+'#Uses "GlobalUtilities.mmbas"
+'#Uses "GlobalTypes.mmbas"
+
+Dim CurrentBranchLevel As Long
+Dim LevelCounter As Long
+Dim TheOutlineNumber As String
+Dim MainTopicCounter As Long
+Dim LastLevel As Long
+
+Dim s As Long
+Dim CurrentOutlineNumber As String
+Dim NumberOfLevelsToJumpDown As Long
+
+Type resource_pointer
+	htmlfile As String
+	htmlbookmark As String
+	topicName As String
+	taskPriority As Long
+End Type
+
+Type resource_name
+	res_name As String
+	res_ndx As Long
+End Type
+
+Dim resource_names( 1 To 1000 ) As resource_name
+Dim resource_pointers( 1 To 1000, 1 To 1000 ) As resource_pointer
+Dim resource_ndx As Long
+
+
+Option Explicit
+
+Sub Main
+
+    Dim addin As Mm5WebExportAddIn
+    Dim webex As WebExport
+    Dim aPage As Mm5WebExportLib.Page
+
+    Set addin = WebExportHelper.WebExportAddIn
+    Set webex = addin.ActiveWebExport
+
+    Dim oneDoc As Document
+    Dim oneTopic As Topic
+
+    Dim count As Long
+    Dim bodyString As String
+
+    Dim resource_mapping As String
+    Dim tmp_priority As String
+
+	Dim x As Long
+	Dim y As Long
+	Dim z As Long
+
+    On Error GoTo ReportError
+        
+    webex.Trace("Entering ToolsCntOutItem.mmbas",2)
+    'webex.MessageBox("Entering ToolsCntOutItem.mmbas")
+
+    ' Outline level counter initialization
+    LastLevel = 0
+    MainTopicCounter = 0
+
+   ' Get the central topic object
+   Set oneTopic = webex.ActiveTopic
+   Set oneDoc = oneTopic.Document
+   Set oneTopic = oneDoc.CentralTopic
+
+   webex.Trace("Page_Tools_Utilities_Contents_OutlineItem - Starting recursive call",1)
+
+   ' Recursive map traversal
+   Call MapTraversal(oneTopic, bodyString, webex)
+
+	' Now, go through the stores resource tagged entries, and create a table of contents entry for all those records in that table
+	' Should show up as a standard Entry listing at the bottom of the table of contents each time.
+
+	' Only make this output table if there are resources asssigned
+
+	resource_mapping = ""
+
+	If resource_ndx > 0 Then
+
+		' If we got any entries, let's sort them by name first
+
+
+		Call bubblesort_names( webex )
+
+		' Now start generating the TOC
+
+		Call insert_toc( resource_mapping, 1, "Resource Crossreference", "", "", webex )
+
+		For x = 1 To resource_ndx
+
+			y = resource_names( x ).res_ndx
+
+			Call insert_toc( resource_mapping, 2, resource_names( x ).res_name, "", "", webex )
+
+			z = 1
+
+			While z <= 1000 And resource_pointers( y, z ).htmlbookmark <> ""
+
+				Select Case resource_pointers( y, z).taskPriority
+					Case 0
+						tmp_priority = "No priority - "
+					Case Else
+						tmp_priority = "P" + CStr( resource_pointers( y, z).taskPriority ) + " - "
+				End Select
+
+				Call insert_toc( resource_mapping, 3, fix_title( tmp_priority + resource_pointers( y, z).topicName ), resource_pointers( y, z).htmlfile, resource_pointers( y, z).htmlbookmark, webex )
+
+				z = z + 1
+
+			Wend
+
+			If z > 1 Then
+
+				resource_mapping = resource_mapping + "]," + Chr$(10)
+
+			End If
+
+		Next x
+
+		resource_mapping = resource_mapping + "]," + Chr$(10)
+
+	End If
+
+	resource_mapping = resource_mapping + "] ];"
+
+	'webex.MessageBox( resource_mapping )
+
+	webex.WriteFile( webex.AbsoluteExportDirectory + "resource_mapping.js", resource_mapping)
+
+   ' Store our result
+   webex.PushString(bodyString)
+
+   webex.Trace("Exiting ToolsCntOutItem.mmbas",2)
+
+   Exit Sub
+ 
+ReportError:
+    ProcessError(webex)
+    Exit Sub
+ 
+End Sub
+
+Function MapTraversal(ByVal oneTopic As Topic, ByRef bodyString As String, ByRef webex As WebExport)
+
+    Dim oneTOCHandler As TOCHandler
+    Dim nextTopic As Topic
+    Dim TopicCount As Integer
+    Dim LocalTemplate As String
+    Dim LocalTopicString As String
+    Dim k As Long
+    Dim l As Long
+    Dim TheTOCNumber As String
+    Dim TopicText As String
+    Dim TopicLink As HyperlinkData
+
+	' *** Parameters added to support provided a resource listing at the end of the table of contents
+
+    Dim oneTask As Task
+    Dim htmlfile As String
+    Dim htmlbookmark As String
+	Dim names(1 To 255) As String
+	Dim names_ndx As Long
+	Dim x As Long
+
+	'webex.MessageBox( "Got to MapTraversal" )
+
+    Set oneTOCHandler = New TOCHandler
+
+    ' Keep track of "recurse level"
+    LevelCounter = LevelCounter + 1
+
+    TopicCount = oneTopic.SubTopics(False).Count
+
+	' Check and see if this task has resources assigned, so that we can create our quick link index at the end of things
+
+    Set oneTask = oneTopic.Task
+	If oneTask.Resources <> "" Then
+
+   	 	webex.FilenameAndBookmarkFromTopic( oneTopic, htmlfile, htmlbookmark )
+
+
+		' For each new name, figure out the sort order of the names
+		' Seperate out the names found by "," markers
+
+		names_ndx = 0
+
+		Call parse_names( oneTask.Resources,  names(), names_ndx, webex )
+
+		For x = 1 To names_ndx
+
+			Call insert_entry( names(x), htmlfile, htmlbookmark, oneTopic.Text, oneTask.Priority ,webex )
+
+		Next x
+
+	End If
+
+    For k = 1 To TopicCount
+
+        Set nextTopic = oneTopic.SubTopics(False).Item(k)
+
+        TheTOCNumber = oneTOCHandler.GetOutlineNumberForTopic(nextTopic, _
+                          webex.GetParameter("Strings.Show.NumberToLevel"))
+
+        TopicLink = TopicHyperlink(webex, nextTopic)
+
+        webex.SetParameter("CustomParameter.TopicHyperlink", TopicLink.Url)
+        webex.SetParameter("CustomParameter.TopicText", VerifyTopicText(webex, nextTopic))
+        webex.SetParameter("CustomParameter.TopicTarget", TargetAttribute(TopicLink))
+
+        ' Enforce maximum "TOC level"
+        'If LevelCounter > webex.GetParameter("Strings.Miscellaneous.TableOfContentsOutlineNumbers") Then
+        '     webex.SetParameter("CustomParameter.TOCOutlineNumberToWrite", "")
+        '  Else
+            webex.SetParameter("CustomParameter.TOCOutlineNumberToWrite", TheTOCNumber)
+        'End If
+
+        ' Enforce maximum "indentation levels"
+        If LevelCounter > 9 Then
+            webex.SetParameter("CustomParameter.TOCOutlineLevel", "x")
+        Else
+            webex.SetParameter("CustomParameter.TOCOutlineLevel", LevelCounter)
+        End If
+
+        LocalTemplate = webex.ReadFile("ToolsCntOutItem.htm")
+        LocalTopicString = LocalTemplate
+
+        ' Process our template and replace parameters, then store new bodystring
+        ProcessString webex, LocalTopicString
+        bodyString = bodyString + LocalTopicString
+
+        ' Recursive call
+        Call MapTraversal(nextTopic, bodyString, webex)
+
+    Next k
+
+    ' Close open levels as we exit recursive loop
+    'bodyString = bodyString + "</div>" + vbCrLf
+
+    ' Keep track of recurse level
+    LevelCounter = LevelCounter - 1
+
+End Function
+
+Sub parse_names( the_name As String, ByRef parsed_names() As String, ByRef parsed_names_ndx As Long , ByRef webex As WebExport)
+
+	' Extract all the resource names into an array, so that each name can be listed individually
+
+	Dim tmp_str As String
+	Dim tmp_pos As Long
+	Dim tmp_parsed As String
+
+	tmp_str = the_name
+
+	tmp_pos = InStr( 1, tmp_str, "," )
+
+	While tmp_pos <> 0 Or Len( Trim( tmp_str ) ) > 0
+
+		If tmp_pos > 1 Then
+			tmp_parsed = Trim( Left( tmp_str, tmp_pos - 1 ) )
+			tmp_str = Trim( Mid( tmp_str, tmp_pos+1, Len(tmp_str) ) )
+		ElseIf tmp_pos = 0 Then
+			tmp_parsed = Trim( tmp_str)
+			tmp_str = ""
+		End If
+
+		If tmp_parsed <> "" Then
+			'webex.MessageBox( "Parsed the name: " + tmp_parsed )
+			parsed_names_ndx = parsed_names_ndx + 1
+			parsed_names( parsed_names_ndx ) = tmp_parsed
+		End If
+
+		tmp_pos = InStr( 1, tmp_str, "," )
+
+	Wend
+
+End Sub
+Sub insert_entry( this_name As String, htmlfile As String, htmlbookmark As String, this_topic As String, this_priority As Long, ByRef webex As WebExport )
+
+	Dim x As Long
+	Dim cur_ndx As Long
+	Dim cur_entry As Long
+	Dim tmp_str As String
+
+	cur_entry = 0
+	cur_ndx = 0
+
+	' Figure out where in the resource name array we have to put this name
+	' If we have a new name, it gets inserted into the array at the correct order
+
+	x = 1
+
+	While x <= resource_ndx And cur_ndx = 0
+
+		If resource_names( x ).res_name = this_name Then
+			'webex.MessageBox( "Found matching resource: " + resource_names( x  ).res_name + "=" + this_name )
+			cur_ndx = x
+		End If
+
+		x = x + 1
+
+	Wend
+
+	If cur_ndx = 0  Then
+
+		'webex.MessageBox( "Adding resource to the end of the array -> " + this_name)
+
+		resource_ndx = resource_ndx + 1
+
+		cur_ndx = x
+
+		' Store the name and index in our name storage area
+
+		resource_names( cur_ndx ).res_name = this_name
+		resource_names( cur_ndx ).res_ndx  = resource_ndx
+
+	End If
+
+	' Now figure out where we can put this pointer to the resource data
+
+	x = 1
+
+	While x <= 1000 And cur_entry = 0
+
+		If resource_pointers( cur_ndx, x ).htmlbookmark = "" Then
+			cur_entry = x
+		End If
+
+		x = x + 1
+
+	Wend
+
+	' Store the particular resource entry for this topic
+
+	resource_pointers( cur_ndx, cur_entry).htmlbookmark = htmlbookmark
+	resource_pointers( cur_ndx, cur_entry).htmlfile = htmlfile
+	resource_pointers( cur_ndx, cur_entry).topicName = this_topic
+	resource_pointers( cur_ndx, cur_entry).taskPriority = this_priority
+
+
+End Sub
+
+Sub display_arrays( ByRef webex As WebExport )
+
+	Dim x As Long
+	Dim y As Long
+	Dim tmp_str As String
+
+	webex.MessageBox( "Resource_ndx: " + CStr(resource_ndx ) )
+
+	For x = 1 To resource_ndx
+
+		webex.MessageBox( "Displaying the list of names" )
+
+		webex.MessageBox( "Resource_Sorted: " + CStr( resource_names( x ).res_ndx ) )
+
+		webex.MessageBox( "Resource name: " + resource_names( resource_names( x ).res_ndx ).res_name )
+
+		y = 1
+		While y <= 1000 And resource_pointers( resource_names( x ).res_ndx, y ).htmlbookmark <> ""
+
+			tmp_str = resource_pointers( resource_names( x ).res_ndx, y ).htmlfile + "#" + resource_pointers( resource_names( x ).res_ndx, y ).htmlbookmark + " -> " + resource_pointers( resource_names( x ).res_ndx, y ).topicName
+
+			webex.MessageBox( "    Pointer found: " + tmp_str )
+
+			y  = y + 1
+
+		Wend
+
+	Next x
+
+End Sub
+
+
+Sub insert_toc( ByRef bodyString As String, ind_level As Long, entry_title As String, entry_htmlfile As String, entry_htmlbookmark As String, ByRef webex As WebExport )
+
+		If ind_level < 3 Then
+
+			bodyString = bodyString + "['" + entry_title + "','',{'sb':' '}," + Chr$(10)
+
+		Else
+
+			bodyString = bodyString + "['" + entry_title + "','" + entry_htmlfile + "#" + entry_htmlbookmark + "',{'tt':'" + entry_title + "','sb':'" + entry_htmlfile + "#" + entry_htmlbookmark + "'},]," + Chr$(10)
+
+		End If
+
+
+End Sub
+
+Sub bubblesort_names( webex As WebExport)
+
+	Dim EventLoop As Long
+	Dim intCounter As Long
+	Dim tmp_name As String
+	Dim tmp_ndx As Long
+
+	' Sort the names, and retain the tracking index to the main task entries
+
+    For EventLoop = 1 To resource_ndx
+
+        For intCounter = 1 To (resource_ndx - 1)
+
+            If resource_names(intCounter).res_name > resource_names(intCounter + 1).res_name Then
+
+				' Swap around the entries
+
+                tmp_name = resource_names(intCounter).res_name
+                resource_names(intCounter).res_name = resource_names(intCounter + 1).res_name
+                resource_names(intCounter + 1).res_name = tmp_name
+
+				' Make sure the index tracks with the name
+
+                tmp_ndx = resource_names(intCounter).res_ndx
+                resource_names(intCounter).res_ndx = resource_names(intCounter + 1).res_ndx
+                resource_names(intCounter + 1).res_ndx = tmp_ndx
+
+            End If
+
+            Next intCounter
+
+    Next EventLoop
+
+End Sub
+
+Function fix_title( the_name As String) As String
+
+	Dim tmp_str As String
+	Dim tmp_ndx As Long
+
+
+	For tmp_ndx = 1 To Len(the_name )
+
+		If Mid( the_name, tmp_ndx, 1 ) <> "'" Then
+			tmp_str = tmp_str + Mid( the_name, tmp_ndx, 1 )
+		End If
+
+	Next tmp_ndx
+
+	fix_title = tmp_str
+
+End Function

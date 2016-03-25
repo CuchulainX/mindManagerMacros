@@ -1,0 +1,156 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>AddIn</name>
+    </assembly>
+    <members>
+        <member name="T:AddIn.Connect">
+            <summary>
+              The object for implementing an Add-in.
+            </summary>
+            <seealso class='IDTExtensibility2' />
+            TODO: Create a new GUID for this class using Tools...Create GUID
+            TODO: Create a new ProgId for this class
+            TODO: In the AddInSetup installer project, change the registry key for HKLM\Software\Mindjet\MindManager\5\AddIns\Mindjet.com.Sample.AddIn.1 to the new ProgID.
+            TODO: In the AddInSetup installer project, change the Description in HKLM\Software\Mindjet\MindManager\5\AddIns\ProgID to a relevant value.
+            TODO: In the AddInSetup installer project, change the FriendlyName in HKLM\Software\Mindjet\MindManager\5\AddIns\ProgID to a relevant value.
+            TODO: In the AddInSetup installer project properties, change the Author property to the author of the add-in.
+            TODO: In the AddInSetup installer project properties, change the Description property to the description of the add-in.
+            TODO: In the AddInSetup installer project properties, change the Manufacturer property to the manufacturer of the add-in.
+            TODO: In the AddInSetup installer project properties, change the Title property to the title of the add-in.
+            TODO: In the AddInSetup installer project properties, create a new Upgrade Code by clicking on the ... in the UpgradeCode property.
+            TODO: In the AddInSetup installer project properties, change the version property to the version of the add-in.
+        </member>
+        <member name="M:AddIn.Connect.#ctor">
+            <summary>
+            	Implements the constructor for the Add-in object.
+            	Place your initialization code within this method.
+            </summary>
+        </member>
+        <member name="M:AddIn.Connect.OnConnection(System.Object,Extensibility.ext_ConnectMode,System.Object,System.Array@)">
+            <summary>
+                 Implements the OnConnection method of the IDTExtensibility2 interface.
+                 Receives notification that the Add-in is being loaded.
+            </summary>
+            <param term='application'>
+                 Root object of the host application.
+            </param>
+            <param term='connectMode'>
+                 Describes how the Add-in is being loaded.
+            </param>
+            <param term='addInInst'>
+                 Object representing this Add-in.
+            </param>
+            <seealso class='IDTExtensibility2' />
+        </member>
+        <member name="M:AddIn.Connect.OnDisconnection(Extensibility.ext_DisconnectMode,System.Array@)">
+            <summary>
+                Implements the OnDisconnection method of the IDTExtensibility2 interface.
+                Receives notification that the Add-in is being unloaded.
+            </summary>
+            <param term='disconnectMode'>
+                 Describes how the Add-in is being unloaded.
+            </param>
+            <param term='custom'>
+                 Array of parameters that are host application specific.
+            </param>
+            <seealso class='IDTExtensibility2' />
+        </member>
+        <member name="M:AddIn.Connect.OnAddInsUpdate(System.Array@)">
+            <summary>
+                 Implements the OnAddInsUpdate method of the IDTExtensibility2 interface.
+                 Receives notification that the collection of Add-ins has changed.
+            </summary>
+            <param term='custom'>
+                 Array of parameters that are host application specific.
+            </param>
+            <seealso class='IDTExtensibility2' />
+        </member>
+        <member name="M:AddIn.Connect.OnStartupComplete(System.Array@)">
+            <summary>
+                 Implements the OnStartupComplete method of the IDTExtensibility2 interface.
+                 Receives notification that the host application has completed loading.
+            </summary>
+            <param term='custom'>
+                 Array of parameters that are host application specific.
+            </param>
+            <seealso class='IDTExtensibility2' />
+        </member>
+        <member name="M:AddIn.Connect.OnBeginShutdown(System.Array@)">
+            <summary>
+                 Implements the OnBeginShutdown method of the IDTExtensibility2 interface.
+                 Receives notification that the host application is being unloaded.
+            </summary>
+            <param term='custom'>
+                 Array of parameters that are host application specific.
+            </param>
+            <seealso class='IDTExtensibility2' />
+        </member>
+        <member name="T:AddIn.Installer1">
+            <summary>
+            Summary description for Installer1.
+            </summary>
+        </member>
+        <member name="F:AddIn.Installer1.components">
+            <summary>
+            Required designer variable.
+            </summary>
+        </member>
+        <member name="M:AddIn.Installer1.#ctor">
+            <summary>
+            Default constructor
+            </summary>
+        </member>
+        <member name="M:AddIn.Installer1.Dispose(System.Boolean)">
+            <summary> 
+            Clean up any resources being used.
+            </summary>
+        </member>
+        <member name="M:AddIn.Installer1.Install(System.Collections.IDictionary)">
+            <summary>
+            Register the assembly for COM interop
+            </summary>
+            <param name="stateSaver"></param>
+        </member>
+        <member name="M:AddIn.Installer1.Uninstall(System.Collections.IDictionary)">
+            <summary>
+            Unregister the assembly
+            </summary>
+            <param name="savedState"></param>
+        </member>
+        <member name="M:AddIn.Installer1.InitializeComponent">
+            <summary>
+            Required method for Designer support - do not modify
+            the contents of this method with the code editor.
+            </summary>
+        </member>
+        <member name="T:Mindjet.Utility">
+            <summary>
+            Utility Class
+            </summary>
+        </member>
+        <member name="M:Mindjet.Utility.#ctor">
+            <summary>
+            Default Constructor
+            </summary>
+        </member>
+        <member name="M:Mindjet.Utility.HandleError(System.Exception)">
+            <summary>
+            Show a message box with the error details.
+            </summary>
+            <param name="se">an exception</param>
+        </member>
+        <member name="M:Mindjet.Utility.Release(System.Object)">
+            <summary>
+            Release A COM object
+            </summary>
+            <param name="o"></param>
+            <returns></returns>
+        </member>
+        <member name="P:Mindjet.Utility.AssemblyTitle">
+            <summary>
+            the Assembly Title
+            </summary>
+        </member>
+    </members>
+</doc>

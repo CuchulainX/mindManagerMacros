@@ -1,0 +1,24 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "ExamplMindManagerAddin", "ExamplMindManagerAddin\ExamplMindManagerAddin.vbproj", "{E1AEAD27-7DD2-435E-9384-6F4F623320A8}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "ExamplMindManagerAddinSetup", "ExamplMindManagerAddinSetup\ExamplMindManagerAddinSetup.vdproj", "{A06B4D2D-9189-40CB-B7B7-AB6D30C5094D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E1AEAD27-7DD2-435E-9384-6F4F623320A8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E1AEAD27-7DD2-435E-9384-6F4F623320A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E1AEAD27-7DD2-435E-9384-6F4F623320A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E1AEAD27-7DD2-435E-9384-6F4F623320A8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A06B4D2D-9189-40CB-B7B7-AB6D30C5094D}.Debug|Any CPU.ActiveCfg = Debug
+		{A06B4D2D-9189-40CB-B7B7-AB6D30C5094D}.Release|Any CPU.ActiveCfg = Release
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
