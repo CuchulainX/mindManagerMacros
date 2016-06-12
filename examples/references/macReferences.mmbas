@@ -115,7 +115,7 @@ Sub Main
 	strRef = CStr(astrReferences$(CInt(dlg.strListChoice+1)))
 	intOpt = dlg.Options
 
-	'Call the GetReferenceStyle function and modify the refernce accordingly
+	'Call the GetReferenceStyle function and modify the reference accordingly
 	strRef = GetReferenceStyle(intOpt, strRef)
 
 	'This is the other bit that doesn't work.  If the macro had picked up the

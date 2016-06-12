@@ -3274,7 +3274,7 @@ Copyright 1994-2015 Mindjet LLC. All rights reserved.
   </xsd:complexType>
   <xsd:complexType name="PresenceGroup">
     <xsd:annotation>
-      <xsd:documentation>Presence group for occurence (workspace link and document link)</xsd:documentation>
+      <xsd:documentation>Presence group for occurrence (workspace link and document link)</xsd:documentation>
     </xsd:annotation>
     <xsd:complexContent>
       <xsd:extension base="cor:Group">
@@ -3450,7 +3450,7 @@ Copyright 1994-2015 Mindjet LLC. All rights reserved.
   </xsd:complexType>
   <xsd:complexType name="RolesGroup">
     <xsd:annotation>
-      <xsd:documentation>Roles group for occurence (workspace)</xsd:documentation>
+      <xsd:documentation>Roles group for occurrence (workspace)</xsd:documentation>
     </xsd:annotation>
     <xsd:complexContent>
       <xsd:extension base="cor:Group">
@@ -3473,7 +3473,7 @@ Copyright 1994-2015 Mindjet LLC. All rights reserved.
   </xsd:complexType>
   <xsd:complexType name="AccessGroup">
     <xsd:annotation>
-      <xsd:documentation>Access group for occurence (workspace)</xsd:documentation>
+      <xsd:documentation>Access group for occurrence (workspace)</xsd:documentation>
     </xsd:annotation>
     <xsd:complexContent>
       <xsd:extension base="cor:Group">
@@ -3498,7 +3498,7 @@ Copyright 1994-2015 Mindjet LLC. All rights reserved.
   </xsd:complexType>
   <xsd:complexType name="InheritAccessGroup">
     <xsd:annotation>
-      <xsd:documentation>Inherit access group for occurence (map)</xsd:documentation>
+      <xsd:documentation>Inherit access group for occurrence (map)</xsd:documentation>
     </xsd:annotation>
     <xsd:complexContent>
       <xsd:extension base="cor:Group">
