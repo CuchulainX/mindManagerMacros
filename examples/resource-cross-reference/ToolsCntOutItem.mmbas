@@ -185,7 +185,7 @@ Function MapTraversal(ByVal oneTopic As Topic, ByRef bodyString As String, ByRef
 
 
 		' For each new name, figure out the sort order of the names
-		' Seperate out the names found by "," markers
+		' Separate out the names found by "," markers
 
 		names_ndx = 0
 

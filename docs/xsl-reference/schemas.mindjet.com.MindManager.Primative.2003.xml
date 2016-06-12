@@ -52,7 +52,7 @@ Copyright 1994-2015 Mindjet LLC. All rights reserved.
 	</xsd:simpleType>
 	<xsd:simpleType name="Level">
 		<xsd:annotation>
-			<xsd:documentation>Level within document's tree stucture; where 0 is root topic, 1 are topics contained by root topic etc.</xsd:documentation>
+			<xsd:documentation>Level within document's tree structure; where 0 is root topic, 1 are topics contained by root topic etc.</xsd:documentation>
 		</xsd:annotation>
 		<xsd:restriction base="xsd:unsignedInt" />
 	</xsd:simpleType>
